@@ -848,6 +848,8 @@ func inflateRawTypes(rawTypes []rawType, rawStrings stringTable) (types []Type, 
 			}
 			typ = &Datasec{id, name, raw.SizeType, vars}
 
+		case kindFloat:
+
 		default:
 			return nil, nil, fmt.Errorf("type id %d: unknown kind: %v", id, raw.Kind())
 		}

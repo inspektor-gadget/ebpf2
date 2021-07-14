@@ -31,6 +31,8 @@ const (
 	// Added ~5.1
 	kindVar
 	kindDatasec
+	// Added ~5.13
+	kindFloat
 )
 
 // FuncLinkage describes BTF function linkage metadata.
@@ -54,7 +56,7 @@ const (
 
 const (
 	btfTypeKindShift     = 24
-	btfTypeKindLen       = 4
+	btfTypeKindLen       = 5
 	btfTypeVlenShift     = 0
 	btfTypeVlenMask      = 16
 	btfTypeKindFlagShift = 31
@@ -117,6 +119,8 @@ func (k btfKind) String() string {
 		return "Variable"
 	case kindDatasec:
 		return "Section"
+	case kindFloat:
+		return "Float"
 	default:
 		return fmt.Sprintf("Unknown (%d)", k)
 	}
@@ -260,6 +264,7 @@ func readTypes(r io.Reader, bo binary.ByteOrder) ([]rawType, error) {
 			data = new(btfVariable)
 		case kindDatasec:
 			data = make([]btfVarSecinfo, header.Vlen())
+		case kindFloat:
 		default:
 			return nil, fmt.Errorf("type id %v: unknown kind: %v", id, header.Kind())
 		}
