@@ -20,6 +20,8 @@
 #define BTF_F_NONAME BTF_F_NONAME___not_used
 #define BTF_F_PTR_RAW BTF_F_PTR_RAW___not_used
 #define BTF_F_ZERO BTF_F_ZERO___not_used
+#define inet_request_sock inet_request_sock___not_used
+#define request_sock request_sock___not_used
 #include "vmlinux.h"
 #undef bpf_iter_meta
 #undef bpf_iter__bpf_map
@@ -40,6 +42,45 @@
 #undef BTF_F_NONAME
 #undef BTF_F_PTR_RAW
 #undef BTF_F_ZERO
+#undef inet_request_sock
+#undef request_sock
+
+struct request_sock {
+	struct sock_common __req_common;
+	struct request_sock *dl_next;
+	u16 mss;
+	u8 num_retrans;
+	u8 syncookie: 1;
+	u8 num_timeout: 7;
+	u32 ts_recent;
+	struct timer_list rsk_timer;
+	const struct request_sock_ops *rsk_ops;
+	struct sock *sk;
+	struct saved_syn *saved_syn;
+	u32 secid;
+	u32 peer_secid;
+};
+
+struct inet_request_sock {
+	struct request_sock req;
+	u16 snd_wscale: 4;
+	u16 rcv_wscale: 4;
+	u16 tstamp_ok: 1;
+	u16 sack_ok: 1;
+	u16 wscale_ok: 1;
+	u16 ecn_ok: 1;
+	u16 acked: 1;
+	u16 no_srccheck: 1;
+	u16 smc_ok: 1;
+	u32 ir_mark;
+	union {
+		struct ip_options_rcu *ireq_opt;
+		struct {
+			struct ipv6_txoptions *ipv6_opt;
+			struct sk_buff *pktopts;
+		};
+	};
+};
 
 struct bpf_iter_meta {
 	struct seq_file *seq;
