@@ -11,10 +11,29 @@ struct {
 	__uint(pinning, LIBBPF_PIN_BY_NAME);
 } kprobe_map SEC(".maps");
 
+struct container {
+  char kubernetes_namespaces[64];
+  char kubernetes_pod[64];
+  char kubernetes_container[64];
+};
+
+struct {
+	__uint(type, BPF_MAP_TYPE_ARRAY);
+	__type(key, u64);
+	__type(value, struct container);
+	__uint(max_entries, 1);
+	__uint(pinning, LIBBPF_PIN_BY_NAME);
+} containers SEC(".maps");
+
 SEC("kprobe/sys_execve")
 int kprobe_execve() {
 	u32 key     = 0;
 	u64 initval = 1, *valp;
+
+	u64 k1 = 0;
+	void *ptr = bpf_map_lookup_elem(&kprobe_map, &k1);
+	if (ptr == 0)
+		return;
 
 	valp = bpf_map_lookup_elem(&kprobe_map, &key);
 	if (!valp) {
