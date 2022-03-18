@@ -88,7 +88,10 @@ func (cs *CollectionSpec) RewriteMaps(maps map[string]*Map) error {
 		}
 
 		// Prevent NewCollection from creating rewritten maps
-		delete(cs.Maps, symbol)
+		if mapSpec, ok := cs.Maps[symbol]; ok {
+			mapSpec.m = m
+		}
+
 	}
 
 	return nil
@@ -420,6 +423,11 @@ func (cl *collectionLoader) loadMap(mapName string) (*Map, error) {
 	mapSpec := cl.coll.Maps[mapName]
 	if mapSpec == nil {
 		return nil, fmt.Errorf("missing map %s", mapName)
+	}
+
+	if mapSpec.m != nil {
+		cl.maps[mapName] = mapSpec.m
+		return mapSpec.m, nil
 	}
 
 	if mapSpec.BTF != nil && cl.coll.Types != mapSpec.BTF.Spec {

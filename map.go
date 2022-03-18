@@ -78,6 +78,9 @@ type MapSpec struct {
 
 	// The BTF associated with this map.
 	BTF *btf.Map
+
+	// Use this map instead of creating a new onf if m != nil
+	m *Map
 }
 
 func (ms *MapSpec) String() string {
