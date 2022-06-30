@@ -8,7 +8,11 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/cilium/ebpf/link"
@@ -21,6 +25,8 @@ import (
 const mapKey uint32 = 0
 
 func main() {
+	fmt.Println("fd list before loading the programs: ")
+	fmt.Println(currentFdList())
 
 	// Name of the kernel function to trace.
 	fn := "sys_execve"
@@ -52,13 +58,40 @@ func main() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	log.Println("Waiting for events..")
+	//log.Println("Waiting for events..")
+	//
+	//for range ticker.C {
+	//	var value uint64
+	//	if err := objs.KprobeMap.Lookup(mapKey, &value); err != nil {
+	//		log.Fatalf("reading map: %v", err)
+	//	}
+	//	log.Printf("%s called %d times\n", fn, value)
+	//}
+	fmt.Println("fd list before closing the programs: ")
+	fmt.Println(currentFdList())
 
-	for range ticker.C {
-		var value uint64
-		if err := objs.KprobeMap.Lookup(mapKey, &value); err != nil {
-			log.Fatalf("reading map: %v", err)
-		}
-		log.Printf("%s called %d times\n", fn, value)
+	kp.Close()
+	objs.Close()
+
+	fmt.Println("fd list after closing the programs: ")
+	fmt.Println(currentFdList())
+}
+
+func currentFdList() (ret string) {
+	files, err := ioutil.ReadDir("/proc/self/fd")
+	if err != nil {
+		return ""
 	}
+	for _, file := range files {
+		fd, err := strconv.Atoi(file.Name())
+		if err != nil {
+			continue
+		}
+		dest, err := os.Readlink("/proc/self/fd/" + file.Name())
+		if err != nil {
+			continue
+		}
+		ret += fmt.Sprintf("%d: %s\n", fd, dest)
+	}
+	return
 }

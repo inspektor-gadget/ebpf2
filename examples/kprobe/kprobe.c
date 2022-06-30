@@ -4,6 +4,8 @@
 
 char __license[] SEC("license") = "Dual MIT/GPL";
 
+const volatile int max_args = 50;
+
 struct bpf_map_def SEC("maps") kprobe_map = {
 	.type        = BPF_MAP_TYPE_ARRAY,
 	.key_size    = sizeof(u32),
@@ -21,7 +23,7 @@ int kprobe_execve() {
 		bpf_map_update_elem(&kprobe_map, &key, &initval, BPF_ANY);
 		return 0;
 	}
-	__sync_fetch_and_add(valp, 1);
+	__sync_fetch_and_add(valp, max_args);
 
 	return 0;
 }
