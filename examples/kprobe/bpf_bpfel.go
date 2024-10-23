@@ -12,6 +12,13 @@ import (
 	"github.com/cilium/ebpf"
 )
 
+type bpfMapTestStruct struct {
+	A uint32
+	B uint32
+	C uint8
+	_ [3]byte
+}
+
 // loadBpf returns the embedded CollectionSpec for bpf.
 func loadBpf() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_BpfBytes)
@@ -53,14 +60,13 @@ type bpfSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfProgramSpecs struct {
-	KprobeExecve *ebpf.ProgramSpec `ebpf:"kprobe_execve"`
 }
 
 // bpfMapSpecs contains maps before they are loaded into the kernel.
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type bpfMapSpecs struct {
-	KprobeMap *ebpf.MapSpec `ebpf:"kprobe_map"`
+	TestMap *ebpf.MapSpec `ebpf:"test_map"`
 }
 
 // bpfObjects contains all objects after they have been loaded into the kernel.
@@ -82,12 +88,12 @@ func (o *bpfObjects) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfMaps struct {
-	KprobeMap *ebpf.Map `ebpf:"kprobe_map"`
+	TestMap *ebpf.Map `ebpf:"test_map"`
 }
 
 func (m *bpfMaps) Close() error {
 	return _BpfClose(
-		m.KprobeMap,
+		m.TestMap,
 	)
 }
 
@@ -95,13 +101,10 @@ func (m *bpfMaps) Close() error {
 //
 // It can be passed to loadBpfObjects or ebpf.CollectionSpec.LoadAndAssign.
 type bpfPrograms struct {
-	KprobeExecve *ebpf.Program `ebpf:"kprobe_execve"`
 }
 
 func (p *bpfPrograms) Close() error {
-	return _BpfClose(
-		p.KprobeExecve,
-	)
+	return _BpfClose()
 }
 
 func _BpfClose(closers ...io.Closer) error {

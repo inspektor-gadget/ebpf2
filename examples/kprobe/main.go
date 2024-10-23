@@ -5,10 +5,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"time"
 
-	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/rlimit"
 )
 
@@ -17,10 +16,6 @@ import (
 const mapKey uint32 = 0
 
 func main() {
-
-	// Name of the kernel function to trace.
-	fn := "sys_execve"
-
 	// Allow the current process to lock memory for eBPF resources.
 	if err := rlimit.RemoveMemlock(); err != nil {
 		log.Fatal(err)
@@ -33,28 +28,23 @@ func main() {
 	}
 	defer objs.Close()
 
-	// Open a Kprobe at the entry point of the kernel function and attach the
-	// pre-compiled program. Each time the kernel function enters, the program
-	// will increment the execution counter by 1. The read loop below polls this
-	// map value once per second.
-	kp, err := link.Kprobe(fn, objs.KprobeExecve, nil)
+	type map_test_struct struct {
+		a int32
+		b int32
+		c int8
+	}
+
+	expectedVal := int32(42)
+	key := map_test_struct{a: 42, b: 42, c: 43}
+
+	m := objs.bpfMaps.TestMap
+	err := m.Put(key, expectedVal)
 	if err != nil {
-		log.Fatalf("opening kprobe: %s", err)
+		fmt.Printf("error was: %s\n", err)
+		return
 	}
-	defer kp.Close()
 
-	// Read loop reporting the total amount of times the kernel
-	// function was entered, once per second.
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
-	log.Println("Waiting for events..")
-
-	for range ticker.C {
-		var value uint64
-		if err := objs.KprobeMap.Lookup(mapKey, &value); err != nil {
-			log.Fatalf("reading map: %v", err)
-		}
-		log.Printf("%s called %d times\n", fn, value)
-	}
+	// wait for enter
+	fmt.Printf("Press enter to stop\n")
+	fmt.Scanln()
 }
